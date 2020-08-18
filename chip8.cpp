@@ -13,12 +13,18 @@ void DisassembleChip8Op(uint8_t* codebuffer, int pc)
 
 	switch (firstnib)
 	{
-	case 0x00: printf("0 not handled yet"); break;
-	case 0x01: printf("1 not handled yet"); break;
-	case 0x02: printf("2 not handled yet"); break;
-	case 0x03: printf("3 not handled yet"); break;
-	case 0x04: printf("4 not handled yet"); break;
-	case 0x05: printf("5 not handled yet"); break;
+	case 0x00: 
+		switch (code[1])
+		{
+		case 0xe0: printf("%-10s", "CLS"); break;	//Clear screen
+		case 0xee: printf("%-10s", "RTS"); break;	//Return from subroutine
+		}
+		break;
+	case 0x01: printf("%-10s $%01x%02x", "JUMP", code[0]&0xf, code[1]); break;		   //Jump to address
+	case 0x02: printf("%-10s $%01x%02x", "CALL", code[0]&0xf, code[1]); break;		   //Calls to subroutine
+	case 0x03: printf("%-10s V%01X,#$%02x", "SKIP.EQ", code[0] & 0xf, code[1]); break; //Skip next instruction if VX=NN  
+	case 0x04: printf("%-10s V%01X,#$%02x", "SKIP.NE", code[0]&0xf, code[1]); break;   //Skip next instruction if VX != NN
+	case 0x05: printf("%-10s V%01X,V%01X", "SKIP.EQ", code[0]&0xf, code[1]); break;    //Skip next instruction if VX = VY
 
 		// op code 6XNN movesan immediate value to a register
 	case 0x06:
@@ -27,8 +33,26 @@ void DisassembleChip8Op(uint8_t* codebuffer, int pc)
 		printf("%-10s V%01X,#$%02x", "MVI", reg, code[1]);
 	}
 	break;
-	case 0x07: printf("7 not handled yet"); break;
-	case 0x08: printf("8 not handled yet"); break;
+	case 0x07: printf("%-10s V%01X,#$%02x", "ADI", code[0]&0xf, code[1]); break;		//Adds NN to VX
+	
+	//Main ALU(Math) operations
+	case 0x08: 
+	{
+		uint8_t lastnib = code[1] & 0xf;
+		switch (lastnib)
+		{
+		case 0: printf("%-10s V%01X,V%01X", "MOV.", code[0] & 0xf, code[1] >> 4); break; //MOV operation VX=VY
+		case 1: printf("%-10s V%01X,V%01X", "OR.", code[0] & 0xf, code[1] >> 4); break;  //Bitwise OR operation
+		case 2: printf("%-10s V%01X,V%01X", "AND.", code[0] & 0xf, code[1] >> 4); break; //Bitwise AND operation
+		case 3: printf("%-10s V%01X,V%01X", "XOR.", code[0] & 0xf, code[1] >> 4); break; //Bitwise XOR operation (Exlusive OR)
+		case 4: printf("%-10s V%01X,V%01X", "ADD.", code[0] & 0xf, code[1] >> 4); break; //ADDs VY and VX, VF set to 1 if carry
+		case 5: printf("%-10s V%01X,V%01X,V%01X", "SUB.", code[0] & 0xf, code[0] & 0xf, code[1] >> 4); break; //SUBs VY from VX, VF set to 0 if borrow
+		case 6: printf("%-10s V%01X,V%01X", "SHR.", code[0] & 0xf, code[1] >> 4, code[1] >> 4); break; //Stores LSB of VX in VF, then shifts VX to the right by 1
+		case 7: printf("%-10s V%01X,V%01X,V%01X", "SUB.", code[0] & 0xf, code[1] >> 4); break; 
+
+
+		}
+	}
 	case 0x09: printf("9 not handled yet"); break;
 
 		// op code ANNN : moves an address to the memory address register I
