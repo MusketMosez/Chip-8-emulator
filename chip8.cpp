@@ -48,12 +48,16 @@ void DisassembleChip8Op(uint8_t* codebuffer, int pc)
 		case 4: printf("%-10s V%01X,V%01X", "ADD.", code[0] & 0xf, code[1] >> 4); break; //ADDs VY and VX, VF set to 1 if carry
 		case 5: printf("%-10s V%01X,V%01X,V%01X", "SUB.", code[0] & 0xf, code[0] & 0xf, code[1] >> 4); break; //SUBs VY from VX, VF set to 0 if borrow
 		case 6: printf("%-10s V%01X,V%01X", "SHR.", code[0] & 0xf, code[1] >> 4, code[1] >> 4); break; //Stores LSB of VX in VF, then shifts VX to the right by 1
-		case 7: printf("%-10s V%01X,V%01X,V%01X", "SUB.", code[0] & 0xf, code[1] >> 4); break; 
+		case 7: printf("%-10s V%01X,V%01X,V%01X", "SUB.", code[0] & 0xf, code[1] >> 4); break; // Sets VX to VY minus VX, VF is set to 0 when there's a borrow
+		case 0xe: printf("%-10s V%01X,V%01X", "SHL.", code[0] & 0xf, code[1] >> 4); break; //Stores MSB of VX in VF then shift VX to right by 1
+
+
 
 
 		}
 	}
-	case 0x09: printf("9 not handled yet"); break;
+	case 0x09: printf("%-10s V%01X,V%01X", "SKIP.NE", code[0]&0xf, code[1]>>4); break; //Skips next instruction if VX != VY
+
 
 		// op code ANNN : moves an address to the memory address register I
 	case 0x0a:
@@ -64,14 +68,44 @@ void DisassembleChip8Op(uint8_t* codebuffer, int pc)
 	}
 	break;
 
-	case 0x0b: printf("b not handles yet"); break;
-	case 0x0c: printf("c not handles yet"); break;
-	case 0x0d: printf("d not handles yet"); break;
-	case 0x0e: printf("e not handles yet"); break;
-	case 0x0f: printf("f not handles yet"); break;
+	case 0x0b: printf("%-10s $%01x%02x(V0)", "JUMP", code[0]&0xf, code[1]); break; //Jumps to the address NNN plus V0
+	case 0x0c: printf("%-10s V%01X,#$%02X", "RNDMSK", code[0]&0xf, code[1]); break;//Sets VX=rand()&NN
+	case 0x0d: printf("%-10s V%01X,V%01X,#$%01x", "SPRITE", code[0]&0xf, code); break;//Draws sprite
+	
+	//Operations representing key actions (interrupts?)
+	case 0x0e: 
+		switch (code[1])
+		{
+		case 0x9E: printf("%-10s V%01X", "SKIPKEY.Y", code[0] & 0xf); break; //Skips the next  instruction if the key stored in VX is pressed
+		case 0xA1: printf("%-10s V%01X", "SKIPKEY.N", code[0] & 0xf); break; //Skips next instruction if the key stored in VX is not pressed
+
+		}
+
+
+		break;
+	
+	//Timers? and some memory operations
+	case 0x0f: 
+		switch (code[1])
+		{
+		case 0x07: printf("%-10s V%01X,DELAY", "MOV", code[0] & 0xf); break;   //Set VX to value of delay timer
+		case 0x0a: printf("%-10s V%01X", "KEY", code[0] & 0xf); break;         //Wait for key press, then store key in VX
+		case 0x15: printf("%-10s DELAY,V%01X", "MOV", code[0] & 0xf); break;   //Set delay time to VX
+		case 0x18: printf("%-10s SOUND,V%01X", "MOV", code[0] & 0xf); break;   //Set sound timer to VX
+		case 0x1e: printf("%-10s I,V%01X", "ADI", code[0] & 0xf); break;	   //Adds VX to I
+		case 0x29: printf("%-10s I,V%01X", "SPRITECHAR", code[0] & 0xf); break;//Sets I to the location of the sprite for the character in VX
+		case 0x33: printf("%-10s (I),V%01X", "MOVBCD", code[0] & 0xf); break;  //Gobblety gook
+		case 0x55: printf("%-10s (I),V0-V%01X", "MOVM", code[0] & 0xf); break; //Stores V0 to VX (including VX) in memory starting at address I
+		case 0x65: printf("%-10s V0-V%01X,(I)", "MOVM", code[0] & 0xf); break; //Fills V0 to VX (including VX) with values from memory starting at address I
+		default: printf("UNKNOWN F"); break;
+
+
+		}
+		break;
 
 
 	}
+	return2;
 }
 
 
