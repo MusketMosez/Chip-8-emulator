@@ -4,7 +4,7 @@
 
 
 //function to process op codes
-void DisassembleChip8Op(uint8_t* codebuffer, int pc)
+static int DisassembleChip8Op(uint8_t* codebuffer, int pc)
 {
 	uint8_t* code = &codebuffer[pc];	//??
 	uint8_t firstnib = (code[0] >> 4); //upper 4 bits of the first byte (opcode)
@@ -105,10 +105,33 @@ void DisassembleChip8Op(uint8_t* codebuffer, int pc)
 
 
 	}
-	return2;
+	return 2;
 }
 
+//struct to handle state of the CHIP-8
+typefef struct Chip8State {
+	uint8_t		V[16];	//16 8-bit registers
+	uint16_t	I;		//Memory address register
+	uint16_t	SP;		//Stack pointer
+	uint16_t	PC;		//Program counter
+	uint8_t		delay;	//delay timer
+	uint8_t		sound;  //sound timer
+	uint8_t		*memory 
+	uint8_t		*screen //this is at memory[0xF00]
+} Chip8State;
 
+//initialise CHIP-8 state
+Chip8State* InitChip8(void)
+{
+	CHip8State* s = calloc(sizeof(Chip8State), 1);
+
+	s->memory = calloc(1024 * 4, 1);
+	s->screen = &s->memory[0xf00];
+	s->SP = 0xfa0;
+	s->PC = 0x200;
+
+	return s;
+}
 
 //main function to read in CHIP-8 programs
 int main(int argc, char** argv)
