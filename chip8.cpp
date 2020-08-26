@@ -133,6 +133,55 @@ Chip8State* InitChip8(void)
 	return s;
 }
 
+//main emulation routine
+void EmulateChip8Op(Chip8State* state)
+{
+	uint8_t* op = &state->memory[state->PC]; //fetch next instruction from PC
+
+	int highnib = (*op & 0xf0) >> 4;
+	switch (highnib)
+	{
+	case 0x00: UnimplementedInstruction(state); break;
+	case 0x01:							//Jump to address NNN
+	{
+		uint16_t target = ((code[0]) & 0xf) << 8) | code[1]; //set target to address NNN
+		state->PC = target;		//goto NNN
+	}
+	case 0x02: UnimplementedInstruction(state); break;
+	case 0x03:							//Skip next if VX = NN
+	{
+		uint8_t reg = code[0] & 0xf; //assign register VX
+		if (state->V[reg] == code[1]) //if VX = NN
+			state->PC += 2;
+		state->PC += 2;
+
+	}
+	break;
+	case 0x04: UnimplementedInstruction(state); break;
+	case 0x05: UnimplementedInstruction(state); break;
+	case 0x06:						//MOV VX,#$NN, Set VX =NN
+	{
+		uint8_t reg = code[0] & 0xf; //set reg to VX
+		state->V[reg] = code[1];	//VX = NN
+		state->PC += 2;
+	}
+	case 0x07: UnimplementedInstruction(state); break;
+	case 0x08: UnimplementedInstruction(state); break;
+	case 0x09: UnimplementedInstruction(state); break;
+	case 0x0a:						//MOV I, #$NNN, set I = NNN
+	{
+		state->I = ((code[0 & 0xf]) << 8) | code[1];
+		state->PC += 2;
+	}
+	break;
+	case 0x0b: UnimplementedInstruction(state); break;
+	case 0x0c: UnimplementedInstruction(state); break;
+	case 0x0e: UnimplementedInstruction(state); break;
+	case 0x0f: UnimplementedInstruction(state); break;
+
+	}
+}
+
 //main function to read in CHIP-8 programs
 int main(int argc, char** argv)
 {
